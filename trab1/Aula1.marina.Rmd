@@ -1,0 +1,118 @@
+---
+title: "Aula 1"
+author: "Ludmilla Viana Jacobson"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+O R Markdown é uma interface de anotações que combina texto com códigos em R (<https://livro.curso-r.com/9-relatorios.html>, último acesso em 13/03/2025) . É uma ferramenta que permite construir relatórios, uma vez que em seu script é indicado por comandos em R o que é texto e o que é imagem ou tabela. Uma vantagem é a reprodutibilidade dos relatórios para diferentes bases de dados. Além disso, o R Markdown oferece vários formatos de outputs (ou saídas) para os scripts, sejam eles estáticos ou dinâmicos, e podem ser salvos em HTML, PDF, MS Word, dentre outros. Da mesma forma que o programa R, pode ser usado via RStudio <http://rmarkdown.rstudio.com>.
+
+# Comandos do R Markdown
+
+Nesta seção serão apresentados comandos do R Markdown utilizados para a produção de tabelas, gráficos e textos.
+
+Pelo RStudio o primeiro passo é abrir um novo documento pelo caminho File > New File > R Markdown. Nesta etapa já é possível definir um título/nome para o documento, assim como será o output (Doc, Shiny, Presentation). O arquivo é salvo como documento .Rmd. 
+
+Alguns pontos mais gerais são importantes destacar, como os **conteúdos gerais** para qualquer script e a maneira de **gerar um output**. 
+
+Quanto ao conteúdo:
+
+  •	O cabeçalho YAML  (opcional) é separado por **---** (como no exemplo de código acima), antes e depois do conteúdo;
+  
+  •	Códigos R separados por **```**: 
+```{r cars, echo=TRUE}
+summary(cars)
+```
+
+Veja que o parâmetro **echo = TRUE** foi adicionado ao bloco de código para incluir no texto a impressão do código R que gerou o resumo estatístico.
+
+  •	Texto misturado com resultados de funções do R e com formatação de texto simples. Exemplo: **#** indica um título para seção do relatório e **##** indica título para subseção. Insira resultados no meio de textos. O código é avaliado na renderização e os resultados aparecem como texto. No exemplo abaixo *muninome* e *muniuf* são objetos que guardam resultados de funções, que neste caso é o nome do município e unidade da federação (UF). Assim, após a renderização, no documento final (relatório com o output) aparecerá o nome do município e da UF. Exemplo do script:
+
+```{r include=FALSE, message=FALSE,warning=FALSE}
+muninome="Mariana"
+muniuf="Minas Gerais"
+```
+
+**Título e subtítulo, incluindo resultado de objeto do R**
+
+# 1. Município de `r muninome`, `r muniuf`
+## 1.1 Caracterização da População
+
+
+
+O relatório output é gerado por renderização por meio da biblioteca knitr. A renderização do R Markdown é o processo de transformar um arquivo .Rmd em um documento final, como HTML, PDF ou Word. 
+
+## Incluindo Plots
+
+Comandos para incluir gráficos
+
+
+```{r pressure, echo=TRUE}
+plot(pressure)
+
+```
+
+```{r fig.cap="*Figura 1.* Temperature x Pressure",echo=F, message=F}
+library(ggplot2)
+data=as.data.frame(pressure)
+ggplot(pressure,aes(x=temperature,y=pressure))+
+  geom_smooth()+
+  theme_bw()
+```
+
+## Incluindo Tabelas de Contingência
+
+  A Tabela 1 apresenta os resultados observados referentes aos trabalhadores de quatro fábricas diferentes, denotadas por fábrica 1, 2, 3 e 4.A fábrica 2 é conhecida por utilizar grandes quantidades do químico *anidro trimelítico* (TMA). Os trabalhadores são classificados como *expostos* e *não expostos*, sendo considerados expostos os trabalhadores da fábrica 2.
+
+```{r echo=FALSE}
+library(knitr)
+
+tabela=matrix(c("Exposto", "Não Exposto","Total",13,21,34,103,264,367,116,285,401),ncol=4,nrow=3)
+kable(tabela, caption="Tabela 1. Sintomas respiratórios relacionados ao trabalho",
+      col.names=c("Grupo", "Sim","Não","Total"))
+```
+
+O objetivo é investigar o perigo relativo que a utilização do químico pode causar aos trabalhadores.
+
+Neste caso podemos avaliar a *associação* entre as variáveis categóricas **Sintomas Respiratóricos e Grupo**, por meio de um teste qui-quadrado
+
+  •	H0: Não existe associação entre as variáveis
+
+  •	H1: Existe associação entre as variáveis
+
+Estatística de teste:
+$$\chi^2=\sum_{k=1}^n \frac{(O_{k}-E_{k})^2}{E_{k}}$$
+
+onde:
+*K* se refere a quantidade de classes;
+*O* é o valor observado de uma determinada classe;
+*E* é o valor esperado desta classe;
+
+(para incluir formulas n Markdown ver: <https://rpruim.github.io/s341/S19/from-class/MathinRmd.html>)
+
+**OBS**: (<https://bookdown.org/luisfca/docs/qui-quadrado.html>)
+*"O Teste Qui-quadrado é um teste não-paramétrico utilizado, basicamente, para três finalidades específicas, que são:
+(1) verificar as distribuições de probabilidades de cada categoria de uma variável em relação a um valor teórico esperado (aderência),
+(2) verificar se as distribuições das categorias são as mesmas para diferentes subpopulações de interesse (homogeneidade) e
+(3) verificar se duas variáveis categóricas são independentes (independência)."*
+
+
+## Adicionando imagem
+
+É possível incluir uma **imagem** no Rmarkdown utilizando o comando ``include_graphics``, indicando o caminho ou o nome da figura salva no seu computador.
+
+``` {r imagem, fig.cap="*Figura 2.* Blocos G e H", out.width="50%", out.height="50%", echo=F}
+knitr::include_graphics("https://estatistica.uff.br/wp-content/uploads/sites/33/2020/05/UFF-47-300x200.jpg")
+```
+
+  •	Ajuste no tamanho:
+  Dentro do *chunk* - isto é, nome dado ao "espaço" onde coloca o código - de incluir a imagem, é necessário colocar os seguintes comandos: ``out.width="50%"`` e ``out.height="50%"``, mudando os percentuais para ver qual se adequa melhor à sua escolha.
+  
+  •	Legenda abaixo da figura:
+  Ainda dentro do chunk da imagem, é possível colocar uma legenda com o comando ``fig.cap="*Figura 2.* Blocos G e H"``, dentro das aspas o que você deseja que apareça escrito.

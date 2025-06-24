@@ -1,0 +1,384 @@
+---
+date: "2025-05-11"
+output: 
+  html_document:
+    theme: flatly
+---
+
+\
+
+\
+<div style="text-align: center;">
+  <img src="https://logodownload.org/wp-content/uploads/2015/03/uff-logo-7.png" style="width: 10%; height: auto;" />
+</div>
+
+
+<div style="text-align: center;">
+# **Desempenho dos dados de material particulado<br>fino sobre a qualidade do ar em estudo<br>epidemiológico no Rio de Janeiro**
+Marina Peçanha - Estudante de Estatística, UFF \
+</div>
+\
+
+
+### **Resumo**
+
+<span style="color:#B25D91">**Objetivo:**</span> Replicar artigo¹ feito pela professora Ludmilla, no qual tinha como objetivo avaliar o desempenho das concentrações de material particulado com diâmetro inferior a 2,5 μm (PM2,5) derivadas de satélite em comparação com medições de estações de monitoramento no município de Salvador. Nesse estudo, será feita a mesma comparação entre dois satélites, do CAMS² e do VonDonkelar³.
+
+<span style="color:#B25D91">**Métodos:**</span> O relatório trata-se de um estudo de séries temporais mensal do ano de 2023. Foi utilizado o teste t pareado para avaliar as diferenças entre os satélites e o método Bland-Altman, para investigar a relação dos erros com o valor verdadeiro do PM2.5, apresentando, também, os limites de concordância.
+
+<span style="color:#B25D91">**Resultados:**</span> Os resultados sugerem que os dados dos satélites utilizados possuem médias significativamente iguais, quando comparados tanto mensal quanto por município.
+
+<span style="color:#B25D91">**Conclusão:**</span> O estudo destaca a importância de validar dados de PM2,5 modelados por satélites para avaliar e compreender os impactos na saúde. O desenvolvimento de modelos que utilizam sensoriamento remoto para estimar PM2,5 permite a quantificação dos riscos à saúde decorrentes da exposição.
+
+```{r bases, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(sf)
+library(geobr)
+library(readxl)
+library(irr)
+library(tmap)
+
+cams = read_csv("PM2.5_diario_2023.csv")
+
+rj_cams = cams |> 
+  mutate(data = ymd(Date),
+         mes = month(data)) |> 
+  mutate(estado = case_when(str_starts(Cod, "33") ~ "Rio de Janeiro")) |> 
+  filter(!is.na(estado)) |> 
+  mutate(Cod = as.character(Cod)) |> 
+  select(Cod,data,mes,PM2.5)
+
+donvonkelar = read_excel("dados_completos_consolidado_donkelar.xlsx")
+
+rj_don = donvonkelar |> 
+  filter(SIGLA_UF == 33) |> 
+  mutate(CD_MUN = as.character(CD_MUN))
+
+shaperj = read_sf("RJ_Municipios_2022.shp")
+```
+\
+
+### **Introdução**
+
+A poluição do ar é uma ameaça ambiental com múltiplos impactos para a saúde humana. A Organização Mundial da Saúde (OMS) chama a atenção para a carga de doença associada à poluição atmosférica. Milhões de mortes prematuras por acidente vascular cerebral, doenças cardíacas, câncer de pulmão e doenças respiratórias crônicas e agudas, incluindo asma, poderiam ser evitadas ao se reduzirem os níveis de poluição do ar. Populações vulneráveis, incluindo as crianças, idosos, gestantes e pessoas com doenças crônicas, estão em maior risco. Será, então, feita uma análise a fim de investigar esse problema no estado do Rio de Janeiro.
+
+\
+
+### **Métodos**
+
+**Desenho e Área de Estudo:** Estudo ecológico de séries temporais mensais, no período de 2023. A pesquisa foi realizada no estado do Rio de Janeiro, o segundo estado mais populoso do país, com população de aproximadamente 6,211 milhões de acordo com o Censo de 2022.
+
+**Base de dados:** Foram utilizadas duas bases de dados para realizar as ánalises, uma com dados observados diariamente do satélite de VonDonkelar³, e a outra com dados mensais do satélite do CAMS².
+
+
+**Análise de Dados:**
+
+<span style="color:#B25D91">*Medidas de concordância*</span> \
+A concordância entre os dados diários de PM2,5 modelados do CAMS² e os dados do DON³ foram investigadas por meio do teste t para amostras pareadas, o qual apresentou que os satélites não diferem tanto assim.
+O método *Bland-Altman* consiste no gráfico de dispersão entre as diferenças e as médias: \
+Diferença = $PM2.5_{don} – PM2.5_{cams}$ e Média= $\frac{PM2.5_{don} + PM2.5_{cams}}{2}$.
+
+Nesse método, as médias são usadas como estimativas do valor verdadeiro do PM2,5 e, portanto, é possível investigar a relação dos erros com o valor verdadeiro de PM2,5. O método também apresenta os limites de concordância calculado por meio da média das diferenças (viés) e seu desvio padrão (sd), como viés±1,96sd. \
+
+<span style="color:#B25D91">*Análise Estatística*</span> \
+Para avaliar a performance dos dados do CAMS² e do VonDonkelar³ em estudos epidemiológicos no RJ, foi proposto um estudo ecológico de séries temporais mensais no ano de 2023. 
+\
+
+### **Resultados**
+
+``` {r tabelas, echo = F, message = F} 
+# tabelas pro grafico em barras
+rj_don_mensal = rj_don |> 
+  mutate(mes = case_when(Mes == 1 ~ "Jan",
+                         Mes == 2 ~ "Fev",
+                         Mes == 3 ~ "Mar",
+                         Mes == 4 ~ "Abril",
+                         Mes == 5 ~ "Mai",
+                         Mes == 6 ~ "Jun",
+                         Mes == 7 ~ "Jul",
+                         Mes == 8 ~ "Ago",
+                         Mes == 9 ~ "Set",
+                         Mes == 10 ~ "Out",
+                         Mes == 11 ~ "Nov",
+                         Mes == 12 ~ "Dez")) |>
+  group_by(mes) |> 
+  summarise(DON = mean(Media_PM25))
+
+
+rj_cams_mensal = rj_cams |> 
+  mutate(mes = case_when(mes == 1 ~ "Jan",
+                         mes == 2 ~ "Fev",
+                         mes == 3 ~ "Mar",
+                         mes == 4 ~ "Abril",
+                         mes == 5 ~ "Mai",
+                         mes == 6 ~ "Jun",
+                         mes == 7 ~ "Jul",
+                         mes == 8 ~ "Ago",
+                         mes == 9 ~ "Set",
+                         mes == 10 ~ "Out",
+                         mes == 11 ~ "Nov",
+                         mes == 12 ~ "Dez")) |>
+  group_by(mes) |> 
+  summarise(CAMS = mean(PM2.5))
+
+
+rj_mensal = rj_don_mensal |> 
+  left_join(rj_cams_mensal,by = "mes")
+
+rj_mensal_longo = rj_mensal |> 
+  pivot_longer(cols = c(DON,CAMS),
+               names_to = "pm",
+               values_to = "valor")
+
+
+# tabelas pros gráficos de dispersão
+rj_cams_munmen = rj_cams |> 
+  group_by(Cod,mes) |> 
+  summarise(pm2.5_cams = mean(PM2.5))
+
+rj_total = rj_don |> 
+  left_join(rj_cams_munmen,join_by("CD_MUN" == "Cod","Mes" == "mes"))
+
+rj_total = rj_total |> 
+  mutate(diferenca = Media_PM25 - pm2.5_cams, # bland-altman
+         media = (Media_PM25 + pm2.5_cams)/2)
+
+avaliacoes <- rj_total[, c("pm2.5_cams", "Media_PM25")]
+iccUF = icc(avaliacoes, model = "twoway", type = "consistency", unit = "single")  # icc
+valoricc = round(iccUF$value,2)
+ic = c(round(iccUF$lbound,3), round(iccUF$ubound,3))
+
+media_diff <- mean(rj_total$diferenca, na.rm = TRUE)
+sd_diff <- sd(rj_total$diferenca, na.rm = TRUE)
+
+limite_superior <- media_diff + 1.96 * sd_diff
+limite_inferior <- media_diff - 1.96 * sd_diff
+
+
+rj_mensal = rj_mensal |>  #blandaltman mensal
+  mutate(diferenca = DON - CAMS,
+         media = (DON + CAMS)/2)
+
+avaliacoes2 <- rj_mensal[, c("CAMS", "DON")]
+iccUF2 = icc(avaliacoes, model = "twoway", type = "consistency", unit = "single")
+valoricc2 = round(iccUF2$value,2)
+ic2 = c(round(iccUF2$lbound,3), round(iccUF2$ubound,3))
+
+media_diff2 <- mean(rj_mensal$diferenca, na.rm = TRUE)
+sd_diff2 <- sd(rj_mensal$diferenca, na.rm = TRUE)
+
+limite_superior2 <- media_diff2 + 1.96 * sd_diff2
+limite_inferior2 <- media_diff2 - 1.96 * sd_diff2
+
+
+# tabela pro gráfico boxplot
+rj_longo <- rj_total |> 
+  pivot_longer(cols = c(Media_PM25,pm2.5_cams), 
+               names_to = "pm", 
+               values_to = "valor") |> 
+  mutate(mes = case_when(Mes == 1 ~ "Jan",
+                         Mes == 2 ~ "Fev",
+                         Mes == 3 ~ "Mar",
+                         Mes == 4 ~ "Abril",
+                         Mes == 5 ~ "Mai",
+                         Mes == 6 ~ "Jun",
+                         Mes == 7 ~ "Jul",
+                         Mes == 8 ~ "Ago",
+                         Mes == 9 ~ "Set",
+                         Mes == 10 ~ "Out",
+                         Mes == 11 ~ "Nov",
+                         Mes == 12 ~ "Dez")) |> 
+  mutate(PM = case_when(pm %in% c("Media_PM25") ~ "DON",
+                        pm %in% c("pm2.5_cams") ~ "CAMS"))
+```
+
+Foram realizados dois testes T pareados, um para os dados mensais do estado do RJ e outro para os dados por municípios do RJ.\
+
+No primeiro, comparando as médias mensais do Rio, com 95% de confiança, <span style="color:#B25D91">**não tiveram evidências suficientes para rejeitar $H_{0}$**</span>, já que o *p-valor* deu 0.7 > 0.05. Além disso, a média das diferenças foi muito pequena (quase zero) e o intervalo de confiança inclui zero, indicando mais uma vez que a diferença não é estatísticamente significativa. \
+Já no segundo teste, comparando as médias municipais com 95% de cofiança, o *p-valor* também foi maior que 0.05 (0.1845 > 0.05), logo <span style="color:#B25D91">**não há evidências para rejeitar $H_{0}$.** </span> A média das diferenças foi quase de 0 (muito pequena) e o intervalo de confiança contém zero, indicando mais uma vez que a diferença não é estatísticamente significativa.
+
+``` {r teste t} 
+# teste t mensal (1)
+t.test(rj_mensal$DON, rj_mensal$CAMS, paired = TRUE)
+
+# teste t municipios (2)
+t.test(rj_total$Media_PM25, rj_total$pm2.5_cams, paired = TRUE)
+```
+\
+
+Durante o período do estudo, a concentração média de PM2,5μg/m³, medida pelos satélites do CAMS², foi de **`r round(mean(rj_cams$PM2.5),2)`**μg/m³, enquanto os dados de PM2,5 do satélite do DON³, em média, de **`r round(mean(rj_don$Media_PM25),2)`**μg/m³. As médias mensais de PM2,5μg/m³, apresentadas abaixo, ultrapassaram a recomendação da OMS para a média anual de qualidade do ar de 5μg/m³.
+
+
+``` {r barras, echo = F, message = F, fig.width=10, fig.height=6} 
+ggplot(rj_mensal_longo,aes(x = factor(mes, levels = c("Jan", "Fev", "Mar", "Abril", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez")), y = valor,fill = pm)) +
+  geom_bar(stat= 'identity',position = 'dodge') +
+  labs(title = "Médias Mensais",x="Mês",y="PM 2.5μg/m³ Médio",fill = "",
+       caption = "Fonte de dados: CAMS² e Vondonkelar³") +
+  scale_fill_manual(values = c("pink", "#B25D91")) +
+  theme_minimal()
+```
+\
+
+\
+Os gráficos abaixo mostram a comparação das séries temporais mensais entre os dados do DON e as concentrações médias dos dados do CAMS com os municípios do RJ, com diferença média estatisticamente significativa de **`r round(mean(rj_total$diferenca),2)`**μg/m³, como mostrado no gráfico de Bland-Altman, no qual também foi calculado o intervalo do coeficiente de correlação interclasse (ICC): [`r ic[1]`;`r ic[2]`], significa que há uma **concordância razoável** entre os erros e o valor (PM2.5) verdadeiro.
+
+``` {r dispersão, message = F, echo = F, warning = F, fig.width=10, fig.height=6} 
+ggplot(rj_total, aes(x = pm2.5_cams, y = Media_PM25)) +
+  geom_point() +
+  labs(x = "PM2.5μg/m³ CAMS", y = "PM2.5μg/m³ DON", title = "Dispersão entre os PM2.5μg/m³",
+       caption = "Fonte de dados: CAMS² e Vondonkelar³") +
+  theme_minimal()
+
+# blandaltman
+ggplot(rj_total, aes(x = media, y = diferenca)) +
+  geom_point() +
+  geom_hline(yintercept = media_diff, linetype = "dotted", color = "pink", size = 1) +
+  annotate("text", x = 23, y = media_diff,
+           label = paste0("média: ", round(media_diff,2)),
+           vjust = -0.5, hjust = -0.3, color = "pink",
+           size = 4, fontface = "bold") +
+  geom_hline(yintercept = limite_superior, linetype = "dashed", color = "#B25D91", size = 1) +
+  geom_hline(yintercept = limite_inferior, linetype = "dashed", color = "#B25D91", size = 1) +
+  labs(y = "Diferenças (DON - CAMS)", x = "Médias", title = "Bland-Altman", 
+       caption = "Fonte de dados: CAMS² e Vondonkelar³") +
+  theme_minimal()
+```
+\
+
+\
+Ao fazer a mesma análise apenas para os **meses** do estado do RJ, obteve uma diferença média estatisticamente significativa de **`r round(mean(rj_mensal$diferenca),2)`**μg/m³, como mostrado no gráfico de Bland-Altman. Neste, também foi calculado o intervalo do coeficiente de correlação interclasse (ICC): [0;`r ic2[2]`], significa que há uma **concordância pobre** entre os erros e o valor (PM2.5) verdadeiro.
+
+``` {r dispersão2, message = F, echo = F, warning = F, fig.width=10, fig.height=6} 
+ggplot(rj_mensal, aes(x = CAMS, y = DON)) +
+  geom_point() +
+  labs(x = "PM2.5μg/m³ CAMS", y = "PM2.5μg/m³ DON", title = "Dispersão entre os PM2.5μg/m³ Mensal",
+       caption = "Fonte de dados: CAMS¹ e Vondonkelar²") +
+  theme_minimal()
+
+# blandaltman
+ggplot(rj_mensal, aes(x = media, y = diferenca)) +
+  geom_point() +
+  geom_hline(yintercept = media_diff2, linetype = "dotted", color = "pink", size = 1) +
+  annotate("text", x = 11, y = media_diff2,
+           label = paste0("média: ", round(media_diff2,2)),
+           vjust = -0.5, hjust = -0.3, color = "pink",
+           size = 4, fontface = "bold") +
+  geom_hline(yintercept = limite_superior2, linetype = "dashed", color = "#B25D91", size = 1) +
+  geom_hline(yintercept = limite_inferior2, linetype = "dashed", color = "#B25D91", size = 1) +
+  labs(y = "Diferenças (DON - CAMS)", x = "Médias", title = "Bland-Altman Mensal", caption = "Fonte de dados: CAMS¹ e Vondonkelar²") +
+  theme_minimal()
+```
+\
+
+\
+Analisando a série com as médias mensais do estado do RJ e os boxplots com médias mensais dos municípios, é notável um aumento entre os meses de Maio-Agosto no PM2.5μg/m³ do CAMS, mas durante o resto do ano o que prevalece é o satélite do DON.
+
+``` {r séries, echo = F, fig.width=10, fig.height=6}
+ggplot(rj_mensal_longo,aes(x = factor(mes, levels = c("Jan", "Fev", "Mar", "Abril", "Mai", "Jun",
+                                                   "Jul", "Ago", "Set", "Out", "Nov", "Dez")), y = valor,
+                           color = pm, group = pm)) +
+  geom_line(size = 1.2) +
+  labs(title = "Médias Mensais",x="Mês",y="PM2.5μg/m³  médio",color = "Satélites", 
+       caption = "Fonte de dados: CAMS² e Vondonkelar³") +
+  scale_color_manual(values = c("pink","#B25D91")) +
+  scale_y_continuous(limits = c(9.5, 20)) +
+  theme_minimal()
+
+# boxplot
+ggplot(rj_longo,aes(x = factor(mes, levels = c("Jan", "Fev", "Mar", "Abril", "Mai", "Jun",
+                                                "Jul", "Ago", "Set", "Out", "Nov", "Dez")), y = valor,
+                    fill = PM)) +
+  geom_boxplot() +
+  labs(title = "Médias Mensais",x="Mês",y="PM2.5μg/m³  médio", fill = "Satélites",
+       caption = "Fonte de dados: CAMS² e Vondonkelar³") +
+  scale_fill_manual(values = c("pink","#B25D91")) +
+  theme_minimal()
+```
+\
+\
+
+E por fim, os mapas comparando os PM2.5 do CAMS e do DON, durante o ano de 2023 no estado do RJ.
+
+#### **Mapa dos PM2.5 do estado do RJ**
+``` {r mapas, echo = F, message = F, fig.width=10, fig.height=6}
+cams_cod = rj_cams |> 
+  group_by(Cod) |> 
+  summarise(pm2.5_cod_cams = mean(PM2.5))
+
+don_cod = rj_don |> 
+  group_by(CD_MUN) |> 
+  summarise(pm2.5_cod_don = mean(Media_PM25))
+
+cams_shape = left_join(x = shaperj,
+                        y = cams_cod,
+                        join_by("CD_MUN" == "Cod"))
+
+don_shape = left_join(x = shaperj,
+                        y = don_cod,
+                        join_by("CD_MUN" == "CD_MUN"))
+
+ggplot(cams_shape) +
+  geom_sf(aes(fill=pm2.5_cod_cams)) +
+  scale_fill_gradient(name = "CAMS\nPM2.5μg/m³",
+                      low = "#ffe6f0", high = "#B25D91",
+                      limits = c(7, 24)) +
+  labs(caption = "Fonte de dados: CAMS²") +
+  theme_minimal()
+  
+
+ggplot(don_shape) +
+  geom_sf(aes(fill=pm2.5_cod_don)) +
+  scale_fill_gradient(name = "DON\nPM2.5μg/m³",
+                      low = "#ffe6f0", high = "#B25D91",
+                      limits = c(7, 24)) +
+  labs(caption = "Fonte de dados: Vondonkelar³") +
+  theme_minimal()
+```
+
+``` {r mapa2, echo = F, message = F} 
+tmap_mode('view')
+
+tm_shape(cams_shape) +
+  tm_polygons(col = "pm2.5_cod_cams",
+              palette = c("#ffe6f0","#B25D91"),
+              title = "PM2.5μg/m³ - CAMS¹",
+              id = "NM_MUN",
+              alpha=0.7,
+              breaks = c(7, 12, 17, 22, 25),
+              popup.vars = c("PM2.5μg/m³: " = "pm2.5_cod_cams"))
+  
+
+tm_shape(don_shape) +
+  tm_polygons(col = "pm2.5_cod_don",
+              palette = c("#ffe6f0","#B25D91"),
+              title = "PM2.5μg/m³ - DON²",
+              id = "NM_MUN",
+              alpha=0.7,
+              breaks = c(7, 12, 17, 22, 25),
+              popup.vars = c("PM2.5μg/m³: " = "pm2.5_cod_don"))
+
+```
+\
+
+
+### **Referências**
+
+1. Artigo Desempenho dos dados de material particulado fino sobre a qualidade do ar em estudo epidemiológico em Salvador, Brasil. Disponível em <a href="https://www.scielo.br/j/rbepid/a/QspKcCmRDKsDWMKXPDpKVzr/?lang=pt" style="color:#B25D91">
+https://www.scielo.br/j/rbepid/a/QspKcCmRDKsDWMKXPDpKVzr/?lang=pt
+</a> \
+2. CAMS, Atmospheric Composition Analysis Group. Disponível em <a href="https://sites.wustl.edu/acag/datasets/surface-pm2-5/#V6.GL.02.03" style="color:#B25D91">
+https://sites.wustl.edu/acag/datasets/surface-pm2-5/#V6.GL.02.03
+</a>
+3. VonDonkelar, Copernicus Europe's Eyes of Earth, Atmosphere Monitoring Service. Disponível em
+<a href="https://atmosphere.copernicus.eu/charts/packages/cams/" style="color:#B25D91">
+https://atmosphere.copernicus.eu/charts/packages/cams/
+</a>
+
+\
+
+\
+
+\

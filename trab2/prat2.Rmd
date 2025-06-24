@@ -1,0 +1,289 @@
+---
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+---
+
+<div style="text-align: right;">
+  <img src="https://international.uff.br/wp-content/uploads/sites/15/2020/12/logo-uff.png" style="width: 20%; height: auto;" />
+</div>
+
+<div style="text-align: center;">
+# **Teste de Aderência**
+Lucas Ribeiro, Marina Peçanha e Samuel Bastione \
+</div>
+\
+O teste de aderência é um tipo de teste **estatístico** utilizado para ver a **adequabilidade** de um modelo probabilístico, isto é, se o modelo é condizente com o conjunto de dados observados e efetivamente representa a realidade.
+
+
+### **Metodologia**
+Em resumo, verifica-se a proximidade entre os valores observados empiricamente e os valores esperados para que, então, seja avaliado se estes diferem significativamente. \
+Considere a seguinte tabela: \
+
+
+<div style="display: flex; align-items: flex-start;">
+  <div style="flex: 1; padding-right: 20px;">
+  
+``` {r, echo=F, warning = F}
+library(kableExtra)
+data.frame(
+  Categoria = c("$A_{1}$","$A_{2}$","...","$A_{k}$","...","$A_{n}$"),
+  Freq_Observada = c("$O_{1}$","$O_{2}$","...","$O_{k}$","...","$O_{n}$"),
+  Freq_Esperada = c("$E_{1}$","$E_{2}$","...","$E_{k}$","...","$E_{n}$")
+) %>%
+  kable(escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  column_spec(1, bold = TRUE) %>%
+  add_header_above(c(" " = 3)) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "black")
+```
+
+  </div>
+  <div style="flex: 1;">
+  As **categorias** representam os diferentes valores que as variáveis podem assumir, a **frequência observada** é a frequência da k-ésima categoria verificada na base de dados e a **frequência esperada** é a frequência calculada a partir de uma distribuição probabilística.
+  
+  Visto que: $~k = 1, 2, ..., n. ~ n \in N.$
+  \
+  
+  \
+  A fim de realizar o teste, é necessário ter as *categorias* e as *frequências* de cada uma delas, para então, definirmos as hipóteses necessárias.
+  </div>
+</div>
+
+\
+
+#### **Hipóteses:**
+As hipóteses são definidas por **nula** e **alternativa**, onde a nula normalmente é a hipótese desejada - que as variáveis sigam a distribuição proposta - e a alternativa é o oposto, que haja alguma variável diferente da distribuição. De maneira formal, temos: \
+
+  •	$H_{0}: p_{1} = p_{O1}, ..., p_{n} = p_{On}$ \
+  •	$H_{1}$: Existe pelo menos um $p_{k}$ diferente. \
+
+Onde $p_{k}$ é a probabilidade esperada e $p_{Ok}$ é a probabilidade observada, para $k = 1, 2, ..., n. n \in N.$
+
+\
+
+#### **Estatística de teste:**
+É a estatística amostral que será usada para criar a regra de decisão do teste, cuja distribuição de probabilidade depende do *paramêtro* envolvido no teste, que nesse caso é o **Qui-Quadrado**, dado pela fórmula:
+
+$$\chi^2=\sum_{k=1}^n \frac{(O_{k}-E_{k})^2}{E_{k}}$$
+Onde: $O_{k}$ é a *frequência observada* e $E_{k}$ é a *frequência esperada*, com a distribuição qui-quadrado tendo $n-1$ *graus de liberdade*.
+
+\
+
+#### **Regra de decisão:**
+Para tomarmos a decisão de **rejeitar** ou não a hipótese nula, temos que achar qual é o **p-valor**, que consiste em: 
+
+$$p-valor = P(X^2_{n-1} \ge X^2_{obs})$$
+
+Onde $X^2_{obs}$ é o resultado obtido na estatística de teste calculada acima.
+
+
+Se para um certo $\alpha$ fixado obtivermos **p-valor** $\le \alpha$, então **rejeitaremos** $H_{0}$, caso contrário, não rejeitaremos.
+
+\
+
+**OBS**: Para achar o p-valor é necessário consultar a tabela da Qui-quadrado.
+
+\
+
+
+#### **Exemplo: Análise de Vendas de uma Loja**
+
+Em uma certa loja, durante o mês de Janeiro, foram vendidos **200** produtos; eletrônicos, roupas, calçados e acessórios. O dono, então, ao analisar os resultados observados, afirmou que suas vendas seguiam uma distribuição de probabilidade dada por:
+
+$$
+\begin{array}{c|c|c|c|c}
+\hline
+\textbf{Categorias} & \text{Eletrônicos} & \text{Roupas} & \text{Calçados} & \text{Acessórios} \\
+\hline
+\text{Prob. Esperada} & 0.4 & 0.3 & 0.2 & 0.1 \\
+\hline
+\end{array}
+$$
+
+
+$$
+\begin{array}{c|c|c|c|c}
+\hline
+\textbf{Categorias} & \text{Eletrônicos} & \text{Roupas} & \text{Calçados} & \text{Acessórios} \\
+\hline
+\text{Resultados Obs.} & 85 & 50 & 40 & 25 \\
+\hline
+\end{array}
+$$
+Para saber se a distribuição do dono da loja está correta, faremos o teste de aderência, seguindo o passo a passo.
+
+\
+
+#### **Passo 1: Definir as Hipóteses**
+
+- $H_0$: As vendas seguem a distribuição esperada.  
+- $H_1$: A distribuição das vendas é diferente da esperada.\
+\
+
+
+<div style="display: flex; align-items: flex-start;">
+  <div style="flex: 1; padding-right: 20px;">
+#### **Passo 2: Calcular as Frequências Esperadas**
+  
+  Se o modelo probabilístico for adequado, os resultados esperados de vendas podem ser calculados multiplicando a probabilidade esperada por **200** (número de vendas no mês):\
+  
+  </div>
+  <div style="flex: 1;">
+  $$ 
+  \begin{array}{c|c}
+  \hline
+  \textbf{Categoria} & \textbf{Esperado} \\
+  \hline
+  \text{Eletrônicos} & 0.4 \times 200 = 80 \\
+  \text{Roupas} & 0.3 \times 200 = 60 \\
+  \text{Calçados} & 0.2 \times 200 = 40 \\
+  \text{Acessórios} & 0.1 \times 200 = 20 \\
+  \hline
+  \end{array}
+  $$
+  </div>
+</div>
+
+#### **Passo 3: Cálcular o Qui-Quadrado**
+
+A estatística qui-quadrado é dada por:
+
+$$\chi^2=\sum_{k=1}^4 \frac{(O_{k}-E_{k})^2}{E_{k}}$$
+
+Substituindo os valores:\
+\
+
+$$\chi^2 = \frac{(85 - 80)^2}{80} + \frac{(50 - 60)^2}{60} + \frac{(40 - 40)^2}{40} + \frac{(25 - 20)^2}{20}$$
+
+$$\chi^2 = 0,3125 + 1,67 + 0 + 1,25 = 3,23$$\
+\
+
+
+#### **Passo 4: Comparar com o Valor Crítico**
+
+Os **graus de liberdade** são calculados como:
+
+\
+<div style="text-align: center;">
+#### *gl* = número de categorias − 1 = 4 − 1 = 3 \
+</div>
+\
+
+Com **3 graus de liberdade**, o valor crítico para $\alpha$ = 0,05 é **7,815**. 
+\
+\
+
+
+#### **Passo 5: Tomar decisão**
+
+
+Como $\chi^2$ = **3,23** é menor que **7,815**, *não rejeitamos* $H_{0}$. Isso significa que os dados não fornecem **evidências suficientes** para dizer que a distribuição das vendas é diferente da esperada.
+
+\
+
+### **Na prática**
+
+Realizaremos um teste de aderência para verificar se a distribuição das escolas niteroienses que possuem ensino médio segue o mesmo comportamento da mesma distribuição a nível nacional. \
+Para isso, será utilizada a base de dados **Microdados do Enem por Escola 2005 a 2015**, fornecida ao público pelo INEP. (<https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/enem-por-escola>. Último acesso em 30/03/2025)
+
+\
+
+#### **1. Carregamento da base e tratativas iniciais:**
+  
+``` {r, message = F}
+library(tidyverse) # Carregamento do pacote tidyverse para utilização das principais funções de carregamento e manipulação de dataframes
+
+# A base já passou por um tratamento prévio, na qual foi filtrada para que se obtenha apenas as escolas de Niterói.
+base = read_csv2("MICRODADOS_ENEM_ESCOLA.csv", locale = locale(encoding = "ISO-8859-1") # Correção do encoding para que caracteres com acentos possam ser lidos.
+)
+
+# Transformando a coluna TP_DEPENDENCIA_ADM_ESCOLA de dbl para fct, para que possa ser feito o agrupamento posteriormente
+base$TP_DEPENDENCIA_ADM_ESCOLA = factor(
+  base$TP_DEPENDENCIA_ADM_ESCOLA,
+  levels = c(1,2,3,4),
+  labels = c("Federal", "Estadual", "Municipal", "Privada")
+)
+```
+
+\
+
+#### **2. Criando a tabela de frequência:**
+
+```{r, message = F}
+# Gerando a tabela de distribuição de frequencia para o ano de 2015.
+dist_freq = base |>
+  filter(NU_ANO == "2015") |>
+  select(NO_ESCOLA_EDUCACENSO, TP_DEPENDENCIA_ADM_ESCOLA) |>
+  distinct() |>
+  group_by(TP_DEPENDENCIA_ADM_ESCOLA) |>
+  summarise(
+    Qtd_escolas = n()
+  ) |>
+  mutate(
+    Freq = round(Qtd_escolas / sum(Qtd_escolas), 4)
+  )
+dist_freq
+```
+
+\
+
+#### **3. Obtendo as frequências esperadas:**
+
+A distribuição esperada será obtida a partir do **Novo painel de Estatísticas Censo Escolar da Educação Básica ** (<https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/estatisticas-censo-escolar>. Último acesso em 30/03/2025), realizado a partir das estatísticas do Censo Escolar do INEP. Abaixo encontra-se a distribuição do número de escolas com ensino médio, por dependência administrativa, em todo o Brasil no ano de 2015.
+
+</div>
+  <div style="flex: 1;">
+  $$ 
+  \begin{array}{c|c|c}
+  \hline
+  \textbf{Rede de Ensino} & \textbf{Frequência Absoluta} & \textbf{Frequência Relativa} \\
+  \hline
+  \text{Federal} & 472 & 0,017\\
+  \text{Estadual} & 19.113 & 0,682\\
+  \text{Municipal} & 277 & 0,010\\
+  \text{Privada} & 8.163 & 0,291\\
+  \hline
+  \end{array}
+  $$
+  A partir das frequências relativas obtidas no censo, podemos obter as frequências esperadas da seguinte forma:
+  \
+  
+ </div>
+  <div style="flex: 1;">
+  $$ 
+  \begin{array}{c|c}
+  \hline
+  \textbf{Rede de Ensino} & \textbf{Esperado} & \textbf{Observado} \\
+  \hline
+  \text{Federal} & 0,017 \times 76 = 1 & 2 \\
+  \text{Estadual} & 0,682 \times 76 = 52 & 26 \\
+  \text{Municipal} & 0,010 \times 76 = 1 & 0 \\
+  \text{Privada} & 0,291 \times 76 = 22 & 44\\
+  \hline
+  \end{array}
+  $$
+
+\ 
+
+#### **4. Calculando o teste $\chi^2$:**
+
+Para calcularmos o valor do teste $\chi^2$ usaremos a função **`chisq.test`** do pacote **`stats`**:
+
+```{r, message=FALSE}
+#Criando uma tabela de frequência absoluta 
+tab_freq = table(base$TP_DEPENDENCIA_ADM_ESCOLA)
+
+teste = chisq.test(x = tab_freq ,
+           #Usaremos as frequências encontradas no passo anterior
+           p = c(0.017,0.682,0.010,0.291))
+
+teste$p.value
+```
+
+\
+
+#### **5. Conclusão:**
+
+Adotando um nível de significância de $\alpha$ = 5%, rejeitamos $H_0$ pois o p-valor é menor do que $\alpha$. Logo, como há diferença estatística significativa, acreditamos que a distribuição das escolas niteroienses participantes do ENEM se difere da distribuição das demais escolas do Brasil.
